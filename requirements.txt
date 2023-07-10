@@ -1,0 +1,6 @@
+openai
+slack
+SlackEventAdapter
+google-api-python-client
+google-cloud-storage
+google-cloud-spanner
