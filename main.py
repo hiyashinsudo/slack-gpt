@@ -56,7 +56,7 @@ def chat():
     return response["choices"][0]["message"]["content"]
 
 
-# Slackmsg投稿テスト用
+# Slack msg投稿テスト用
 @app.route('/postmsg', methods=['GET', 'POST'])
 def respond_message():
     post_text = 'あいうえおabc'
