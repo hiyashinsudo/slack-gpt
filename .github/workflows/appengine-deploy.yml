@@ -4,16 +4,21 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy-staging:
-    name: GAE deploy
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Deploy an App Engine app
-        id: deploy-app
-        uses: google-github-actions/deploy-appengine@v0.3.1
+      - uses: actions/checkout@v3
+      - uses: 'google-github-actions/auth@v1'
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          deliverables: app.yaml
-          credentials: ${{ secrets.GCP_SA_KEY }}
-          version: v1
+          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+      - name: Deploy an App Engine app
+        uses: google-github-actions/deploy-appengine@v1
+        with:
+          project_id: "${{ vars.GCP_PROJECT_ID }}"
+          env_vars: |-
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            SLACK_API_TOKEN=${{ secrets.SLACK_API_TOKEN }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }}
+            TWILIO_USERNAME=${{ secrets.TWILIO_USERNAME }}
+            TWILIO_PASSWORD=${{ secrets.TWILIO_PASSWORD }}

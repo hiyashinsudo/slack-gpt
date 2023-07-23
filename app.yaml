@@ -5,11 +5,3 @@ service: slack-gpt
 basic_scaling:
   max_instances: 1
   idle_timeout: 5m
-
-env_variables:
-  SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
-  TWILIO_USERNAME: ${{ secrets.TWILIO_USERNAME }}
-  TWILIO_PASSWORD: ${{ secrets.TWILIO_PASSWORD }}
-
