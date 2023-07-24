@@ -1,16 +1,15 @@
 import os
-from enum import Enum
+import threading
 
-from flask import Flask, request, jsonify
 import requests
+from flask import Flask, request, jsonify
 from requests.auth import HTTPBasicAuth
 from slackeventsapi import SlackEventAdapter
-import threading
-import openai
+
+from status import Status
 
 # 環境変数の設定
 slack_token = os.environ["SLACK_API_TOKEN"]
-openai.api_key = os.environ["OPENAI_API_KEY"]
 slack_signing_secret = os.environ["SLACK_SIGNING_SECRET"]
 twilio_username = os.environ["TWILIO_USERNAME"]
 twilio_password = os.environ["TWILIO_PASSWORD"]
@@ -22,11 +21,6 @@ previous_user_events = []
 
 # Slack Events Adapterを作成
 slack_events_adapter = SlackEventAdapter(slack_signing_secret, "/slack/events", app)
-
-
-class Status(Enum):
-    OK = 'OK'
-    NG = 'NG'
 
 
 ####################################
@@ -43,7 +37,6 @@ def handle_message(event_data):
     print("event triggerd: ", event)
     # 不要なイベントに発火しないためのバリデーション
     if event_data in previous_user_events:
-        print("---validation---")
         return
     if "bot_id" in event:  # ボットが自身のメッセージに応答しないようにするためのチェック
         return
@@ -54,33 +47,6 @@ def handle_message(event_data):
     send_message(target=user_id, message=jung_response.json()['message'])
     # 最後のユーザーイベントとしてを追加
     previous_user_events.append(event_data)
-
-
-def send_message(target, message):
-    url = 'https://slack.com/api/chat.postMessage'
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + slack_token
-    }
-    data = {
-        'channel': target,
-        'text': message
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print(response)
-
-
-def send_message_url(url, target, message):
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + slack_token
-    }
-    data = {
-        'channel': target,
-        'text': message
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print(response)
 
 
 def begin_interview(subject, approach, target):
@@ -144,37 +110,10 @@ def start_from_command():
     return "インタビュー開始中。。。"
 
 
-def begin_interview_and_send_to_slack(url, paras):
-    result = begin_interview(subject=paras[0], approach=paras[1], target=paras[2])
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + slack_token
-    }
-    data = {
-        'text': result
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print(response)
-
-
-def get_summary_and_send_to_slack(url):
-    result = get_summary()
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + slack_token
-    }
-    data = {
-        'text': result
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print(response)
-
-
 ####################################
 # サマリ取得系
 ####################################
 
-@app.route('/get_summary', methods=['POST'])  # エンドポイントとして入っているのはテスト用
 def get_summary():
     print("get_summary")
     url = "https://interviewer-bot-api-dot-project-slack-gpt.dt.r.appspot.com/collect"
@@ -203,6 +142,59 @@ def get_summary_from_command():
     t = threading.Thread(target=get_summary_and_send_to_slack, args=[response_url])
     t.start()
     return "要約中。。。"
+
+
+def send_message(target, message):
+    url = 'https://slack.com/api/chat.postMessage'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + slack_token
+    }
+    data = {
+        'channel': target,
+        'text': message
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print(response)
+
+
+def send_message_url(url, target, message):
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + slack_token
+    }
+    data = {
+        'channel': target,
+        'text': message
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print(response)
+
+
+def begin_interview_and_send_to_slack(url, paras):
+    result = begin_interview(subject=paras[0], approach=paras[1], target=paras[2])
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + slack_token
+    }
+    data = {
+        'text': result
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print(response)
+
+
+def get_summary_and_send_to_slack(url):
+    result = get_summary()
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + slack_token
+    }
+    data = {
+        'text': result
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print(response)
 
 
 if __name__ == "__main__":
